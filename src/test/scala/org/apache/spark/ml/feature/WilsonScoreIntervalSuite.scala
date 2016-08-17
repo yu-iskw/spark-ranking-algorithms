@@ -26,15 +26,15 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.mllib.util.MLlibTestSparkContext
 
 @BeanInfo
-case class TestData(docId: Long, positives: Long, negatives: Long)
+case class TestWilsonScoreIntervalData(docId: Long, positives: Long, negatives: Long)
 
 class WilsonScoreIntervalSuite extends SparkFunSuite with MLlibTestSparkContext {
 
   private val data = Seq(
-    TestData(1L, 2L, 1L),
-    TestData(2L, 20L, 10L),
-    TestData(3L, 200L, 100L),
-    TestData(4L, 2000L, 1000L)
+    TestWilsonScoreIntervalData(1L, 2L, 1L),
+    TestWilsonScoreIntervalData(2L, 20L, 10L),
+    TestWilsonScoreIntervalData(3L, 200L, 100L),
+    TestWilsonScoreIntervalData(4L, 2000L, 1000L)
   )
 
   test("transform") {
