@@ -3,7 +3,7 @@
 
 spName := "yu-iskw/spark-ranking-algorithms"
 
-version := "0.0.2"
+version := "0.0.3"
 
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
