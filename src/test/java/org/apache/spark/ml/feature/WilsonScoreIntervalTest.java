@@ -27,16 +27,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
+import static org.apache.spark.sql.functions.callUDF;
+import static org.apache.spark.sql.functions.col;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.ml.Pipeline;
 import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
-import org.apache.spark.sql.DataFrame;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -64,8 +63,7 @@ public class WilsonScoreIntervalTest {
     jsc = null;
   }
 
-  @Test
-  public void testRun() {
+  private DataFrame createTestDataFrame() {
     JavaRDD<Row> rdd = jsc.parallelize(data);
     StructType schema = DataTypes.createStructType(new StructField[]{
         DataTypes.createStructField("docId", DataTypes.LongType, false),
@@ -73,6 +71,12 @@ public class WilsonScoreIntervalTest {
         DataTypes.createStructField("negatives", DataTypes.LongType, false)
     });
     DataFrame df = jsql.createDataFrame(rdd, schema);
+    return df;
+  }
+
+  @Test
+  public void testRun() {
+    DataFrame df = createTestDataFrame();
 
     WilsonScoreInterval wilsonScore = new WilsonScoreInterval()
         .setPositiveCol("positives")
@@ -88,13 +92,7 @@ public class WilsonScoreIntervalTest {
 
   @Test
   public void testPipeline() {
-    JavaRDD<Row> rdd = jsc.parallelize(data);
-    StructType schema = DataTypes.createStructType(new StructField[]{
-        DataTypes.createStructField("docId", DataTypes.LongType, false),
-        DataTypes.createStructField("positives", DataTypes.LongType, false),
-        DataTypes.createStructField("negatives", DataTypes.LongType, false)
-    });
-    DataFrame df = jsql.createDataFrame(rdd, schema);
+    DataFrame df = createTestDataFrame();
 
     WilsonScoreInterval wilsonScore = new WilsonScoreInterval()
         .setPositiveCol("positives")
@@ -114,13 +112,7 @@ public class WilsonScoreIntervalTest {
 
   @Test
   public void testSaveAndLoad() throws IOException {
-    JavaRDD<Row> rdd = jsc.parallelize(data);
-    StructType schema = DataTypes.createStructType(new StructField[]{
-        DataTypes.createStructField("docId", DataTypes.LongType, false),
-        DataTypes.createStructField("positives", DataTypes.LongType, false),
-        DataTypes.createStructField("negatives", DataTypes.LongType, false)
-    });
-    DataFrame df = jsql.createDataFrame(rdd, schema);
+    DataFrame df = createTestDataFrame();
 
     WilsonScoreInterval wilsonScore = new WilsonScoreInterval()
         .setPositiveCol("positives")
@@ -136,5 +128,22 @@ public class WilsonScoreIntervalTest {
     assertEquals(0.553022430377575, scoreList.get(1).getDouble(0), 1e-5);
     assertEquals(0.6316800063346981, scoreList.get(2).getDouble(0), 1e-5);
     assertEquals(0.6556334308906774, scoreList.get(3).getDouble(0), 1e-5);
+  }
+
+
+  @Test
+  public void testDefiningUDF() {
+    DataFrame df = createTestDataFrame();
+
+    WilsonScoreInterval.defineUDF(jsql);
+    // DataFrame
+    List<Row> scores =
+        df.select(callUDF("wilson_score_interval", col("positives"), col("negatives"))).collectAsList();
+    assertEquals(4, scores.size());
+    // Spark SQL
+    df.registerTempTable("test_data");
+    List<Row> scores2 =
+        jsql.sql("SELECT wilson_score_interval(positives, negatives) FROM test_data").collectAsList();
+    assertEquals(4, scores2.size());
   }
 }
