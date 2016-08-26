@@ -65,7 +65,6 @@ class OkapiBM25Suite extends SparkFunSuite with MLlibTestSparkContext {
     assert(bm25Vectors(1).numActives === 4)
     assert(bm25Vectors(2).numActives === 4)
     assert(bm25Vectors(3).numActives === 4)
-    transformed.select("bm25").show(false)
 
     // print debug
     //vectorizedDF.select("token_count").map{row => row.getAs[Vector](0).toDense}.foreach(println)
