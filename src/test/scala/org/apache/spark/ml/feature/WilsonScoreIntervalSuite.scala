@@ -107,4 +107,18 @@ class WilsonScoreIntervalSuite extends SparkFunSuite with MLlibTestSparkContext 
       WilsonScoreInterval.confidence(10, -1)
     }
   }
+
+  test("create an UDF for Wilson-score interval") {
+    val rdd = sc.parallelize(data)
+    val df = sqlContext.createDataFrame(rdd)
+    val wilsonScoreInterval = WilsonScoreInterval.defineUDF(sqlContext)
+
+    val scores = df.select(wilsonScoreInterval(df("positives"), df("negatives"))).collect()
+    assert(scores(0).getDouble(0) === 0.22328763310073402)
+
+    df.registerTempTable("test_data")
+    val scores2 =
+      sqlContext.sql("SELECT wilson_score_interval(positives, negatives) FROM test_data").collect()
+    assert(scores2(0).getDouble(0) === 0.22328763310073402)
+  }
 }

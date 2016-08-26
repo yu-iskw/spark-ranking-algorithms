@@ -19,12 +19,12 @@ package org.apache.spark.ml.feature
 
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.param.{ParamMap, Param, Params}
 import org.apache.spark.ml.param.shared.HasOutputCol
+import org.apache.spark.ml.param.{Param, ParamMap, Params}
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
-import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.functions._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.{UserDefinedFunction, DataFrame, SQLContext}
 
 
 /**
@@ -98,12 +98,8 @@ class WilsonScoreInterval(override val uid: String)
 
   override def transform(dataset: DataFrame): DataFrame = {
     transformSchema(dataset.schema, logging = true)
-    val scoreUdf = udf(createTransformFunc)
+    val scoreUdf = udf(WilsonScoreInterval.createTransformFunc)
     dataset.withColumn($(outputCol), scoreUdf(col(getPositiveCol), col(getNegativeCol)))
-  }
-
-  protected def createTransformFunc: (Long, Long) => Double = {
-    (pos: Long, neg: Long) => WilsonScoreInterval.confidence(pos, neg)
   }
 
   protected def outputDataType: DataType = new ArrayType(StringType, true)
@@ -128,6 +124,14 @@ class WilsonScoreInterval(override val uid: String)
 object WilsonScoreInterval extends DefaultParamsReadable[WilsonScoreInterval] {
 
   override def load(path: String): WilsonScoreInterval = super.load(path)
+
+  protected def createTransformFunc: (Long, Long) => Double = {
+    (pos: Long, neg: Long) => WilsonScoreInterval.confidence(pos, neg)
+  }
+
+  def defineUDF(sqlContext: SQLContext): UserDefinedFunction = {
+    sqlContext.udf.register("wilson_score_interval", WilsonScoreInterval.createTransformFunc)
+  }
 
   /**
     * Calculates lower bound of Wilson score confidence interval for a Bernoulli parameter
