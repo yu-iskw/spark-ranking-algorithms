@@ -76,6 +76,8 @@ trait OkapiBM25Params extends Params with HasFeaturesCol with HasOutputCol {
   * Okapi BM25 (BM stands for Best Matching) is a ranking function used
   * by search engines to rank matching documents according to their
   * relevance to a given search query.
+  *
+  * https://en.wikipedia.org/wiki/Okapi_BM25
   */
 @Experimental
 class OkapiBM25(override val uid: String)
@@ -135,6 +137,9 @@ object OkapiBM25 extends DefaultParamsReadable[OkapiBM25] {
 /**
   * :: Experimental ::
   * Model fitted by Okapi BM25
+  *
+  * @param idf inversed document frequency as `Vector`
+  * @param meanDocumentLength average length of all documents as `Double`
   */
 @Experimental
 class OkapiBM25Model private[ml](override val uid: String,
@@ -175,7 +180,7 @@ class OkapiBM25Model private[ml](override val uid: String,
 
 /**
   * :: Experimental ::
-  * XXX
+  * Model fitted by OkapiBM25
   */
 @Experimental
 object OkapiBM25Model extends MLReadable[OkapiBM25Model] {
