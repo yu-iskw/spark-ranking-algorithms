@@ -8,3 +8,19 @@ This package offers some ranking algorithms on Apache Spark machine learning pip
 
 - [Wilson score interval](./docs/wilson-score-interval.md)
 - [Okapi BM25](./docs/okapi-bm25.md)
+
+## Note
+
+```{shell}
+# make a packaged jar
+sbt package
+
+# make a assembled JAR
+sbt assembly
+
+# run unit tests
+sbt test
+
+# check coding style
+sbt scalastyle
+```
